@@ -1,0 +1,58 @@
+# Publishing is driven by the version in pyproject.toml: change it on main and this
+# ships that release to PyPI. Nothing else triggers a publish, so the number in the
+# repo is the number users get.
+#
+# Authentication is PyPI trusted publishing, so there is no token to hold. It needs a
+# pending publisher on PyPI for project langchain-string, owner usestring, repository
+# langchain-string, workflow publish.yml, with no environment set.
+name: Publish
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - pyproject.toml
+  workflow_dispatch:
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write # OIDC, which is how PyPI authenticates this repo
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      # The path filter fires on any pyproject.toml edit, a dependency bump
+      # included, so decide here whether this version is actually new rather
+      # than letting PyPI fail the job over a republish.
+      - name: Is this version unpublished?
+        id: check
+        run: |
+          version="$(grep -m1 '^version = ' pyproject.toml | cut -d'"' -f2)"
+          status="$(curl -sS -o /dev/null -w '%{http_code}' \
+            "https://pypi.org/pypi/langchain-string/$version/json")"
+          if [ "$status" = "200" ]; then
+            echo "langchain-string $version is already on PyPI; nothing to publish"
+            echo "new=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "new=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.check.outputs.new == 'true'
+        run: uv sync --locked
+      - if: steps.check.outputs.new == 'true'
+        run: uv run pytest tests/unit_tests
+      - if: steps.check.outputs.new == 'true'
+        run: uv build
+
+      - name: Publish to PyPI
+        if: steps.check.outputs.new == 'true'
+        run: uv publish --trusted-publishing always

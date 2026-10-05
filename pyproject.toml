@@ -1,0 +1,69 @@
+[project]
+name = "langchain-string"
+version = "0.1.0"
+description = "String Web Access tools for LangChain — search the web and fetch any URL as clean, LLM-ready Markdown."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Relativity Labs Inc." }]
+requires-python = ">=3.10"
+keywords = [
+  "langchain",
+  "string-ai",
+  "web-access",
+  "web-scraping",
+  "web-search",
+  "markdown",
+  "data-extraction",
+  "llm",
+  "ai-agents",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Typing :: Typed",
+]
+dependencies = ["langchain-core>=0.3.60,<2", "httpx>=0.27.0"]
+
+[project.urls]
+Homepage = "https://usestring.ai"
+Documentation = "https://portal.usestring.ai/docs/guides/langchain"
+Repository = "https://github.com/usestring/langchain-string"
+Issues = "https://github.com/usestring/langchain-string/issues"
+
+[dependency-groups]
+dev = [
+  "pytest>=8",
+  "pytest-asyncio>=0.24",
+  "pytest-socket>=0.7",
+  "langchain-tests>=1.1.9",
+  "ruff>=0.8",
+  "mypy>=1.13",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["langchain_string"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "T201"]
+
+[tool.mypy]
+# Left unpinned: a pinned python_version makes mypy parse installed 3.12+ stubs as errors.
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "langchain_string.*"
+disallow_untyped_defs = true
